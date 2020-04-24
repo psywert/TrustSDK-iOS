@@ -22,7 +22,7 @@ public extension TrustSDK {
             }
 
             do {
-                let command: TrustSDK.Command = .sign(coin: coin, input: try input.serializedData(), send: false, metadata: metadata)
+                let command: TrustSDK.Command = .sign(coin: coin, input: try input.serializedData(), submittable: false, metadata: metadata)
                 try TrustSDK.send(request: SignRequest(command: command, callback: callback))
             } catch {
                 callback(Result.failure(error))
@@ -36,7 +36,7 @@ public extension TrustSDK {
             }
 
             do {
-                let command: TrustSDK.Command = .sign(coin: coin, input: try input.serializedData(), send:true, metadata: metadata)
+                let command: TrustSDK.Command = .signAndSend(coin: coin, input: try input.serializedData(), metadata: metadata)
                 try TrustSDK.send(request: SignThenSendRequest(command: command, callback: callback))
             } catch {
                 callback(Result.failure(error))

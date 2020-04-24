@@ -10,6 +10,7 @@ import TrustWalletCore
 enum CommandName: String {
     case getAccounts = "sdk_get_accounts"
     case sign = "sdk_sign"
+    case signAndSend = "sdk_sign_send"
 }
 
 enum SignMetadataName: String {
@@ -62,7 +63,8 @@ public extension TrustSDK {
     }
 
     enum Command {
-        case sign(coin: CoinType, input: Data, send: Bool, metadata: SignMetadata?)
+        case sign(coin: CoinType, input: Data, submittable: Bool, metadata: SignMetadata?)
+        case signAndSend(coin: CoinType, input: Data, metadata: SignMetadata?)
         case getAccounts(coins: [CoinType])
 
         public var name: String {
@@ -70,7 +72,7 @@ public extension TrustSDK {
                 switch self {
                 case .getAccounts:
                     return .getAccounts
-                case .sign:
+                case .sign, .signAndSend:
                     return .sign
                 }
             }()
@@ -84,11 +86,20 @@ public extension TrustSDK {
                 return [
                     "coins": coins.map { $0.rawValue },
                 ]
-            case .sign(let coin, let input, let send, let meta):
+            case .sign(let coin, let input, let submittable, let meta):
                 return [
                     "coin": coin.rawValue.description,
                     "data": input.base64UrlEncodedString(),
-                    "send": send,
+                    "send": false,
+                    "submittable": submittable,
+                    "meta": meta?.params ?? [:],
+                ]
+            case .signAndSend(let coin, let input, let meta):
+                return [
+                    "coin": coin.rawValue.description,
+                    "data": input.base64UrlEncodedString(),
+                    "send": true,
+                    "submittable": true,
                     "meta": meta?.params ?? [:],
                 ]
             }
@@ -118,12 +129,22 @@ public extension TrustSDK {
                 }
                 let metaParam = params["meta"] as? [String: Any]
                 let sendParam = params["send"] as? String
-                self = .sign(
-                    coin: coin,
-                    input: data,
-                    send: sendParam?.toBool() ?? false,
-                    metadata: SignMetadata(params: metaParam ?? [:])
-                )
+                let submittable = (params["submittable"] as? String)?.toBool()
+                if let send = sendParam, send.toBool() {
+                    self = .signAndSend(
+                        coin: coin,
+                        input: data,
+                        metadata: SignMetadata(params: metaParam ?? [:])
+                    )
+                } else {
+                    self = .sign(
+                        coin: coin,
+                        input: data,
+                        submittable: submittable ?? false,
+                        metadata: SignMetadata(params: metaParam ?? [:])
+                    )
+                }
+
             default:
                 return nil
             }

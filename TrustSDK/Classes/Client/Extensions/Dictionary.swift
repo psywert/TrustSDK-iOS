@@ -83,6 +83,6 @@ extension Dictionary {
 
             return (key, entry.value)
         }
-        return Dictionary<T, Value>(uniqueKeysWithValues: entries)
+        return [T: Value](uniqueKeysWithValues: entries)
     }
 }

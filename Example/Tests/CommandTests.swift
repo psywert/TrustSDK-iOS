@@ -10,7 +10,7 @@ import TrustWalletCore
 
 class CommandTests: XCTestCase {
     func testSignCommandAttributes() {
-        let signCommand = TrustSDK.Command.sign(coin: .ethereum, input: Data(), send: true, metadata: .dApp(name: "Test", url: URL(string: "https://dapptest.com")))
+        let signCommand = TrustSDK.Command.signAndSend(coin: .ethereum, input: Data(), metadata: .dApp(name: "Test", url: URL(string: "https://dapptest.com")))
         let signParams = signCommand.params
         
         let getAccountsCommand = TrustSDK.Command.getAccounts(coins: [.ethereum, .bitcoin])
@@ -40,6 +40,7 @@ class CommandTests: XCTestCase {
             URLQueryItem(name: "meta.name", value: "Test"),
             URLQueryItem(name: "meta.url", value: "https://dapptest.com"),
             URLQueryItem(name: "send", value: "true"),
+            URLQueryItem(name: "submittable", value: "true"),
         ], signParams.queryItems())
     }
 
@@ -49,7 +50,7 @@ class CommandTests: XCTestCase {
             params: [
                 "coin": "60",
                 "data": "",
-                "send": "true",
+                "send": "false",
                 "meta": [
                     "__name": "dapp",
                     "name": "Test",
@@ -59,11 +60,11 @@ class CommandTests: XCTestCase {
         )
         
         switch command {
-        case let .sign(coin, data, send, meta):
+        case let .sign(coin, data, submittable, meta):
             XCTAssertEqual(CoinType.ethereum, coin)
             XCTAssertEqual(Data(), data)
-            XCTAssertTrue(send)
             XCTAssertEqual(TrustSDK.SignMetadata.dApp(name: "Test", url: URL(string: "https://dapptest.com")), meta)
+            XCTAssertFalse(submittable)
         default:
             XCTFail()
         }
@@ -74,10 +75,9 @@ class CommandTests: XCTestCase {
         let command = TrustSDK.Command.init(components: components)
         
         switch command {
-        case let .sign(coin, data, send, meta):
+        case let .signAndSend(coin, data, meta):
             XCTAssertEqual(CoinType.ethereum, coin)
             XCTAssertEqual(Data(), data)
-            XCTAssertTrue(send)
             XCTAssertEqual(TrustSDK.SignMetadata.dApp(name: "Test", url: URL(string: "https://dapptest.com")), meta)
         default:
             XCTFail()
